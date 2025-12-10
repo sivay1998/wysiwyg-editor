@@ -1,0 +1,61 @@
+name: Bump Version & Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      old_version:
+        description: "Current version (e.g., 4.7.1)"
+        required: true
+      new_version:
+        description: "New version (e.g., 4.7.2)"
+        required: true
+
+jobs:
+  bump-version:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update versions in files
+        run: |
+          echo "Updating version ${{ github.event.inputs.old_version }} → ${{ github.event.inputs.new_version }}"
+
+          # For JS repo (wysiwyg-editor)
+          if [ -f "package.json" ]; then
+            sed -i "s/${{ github.event.inputs.old_version }}/${{ github.event.inputs.new_version }}/g" package.json
+          fi
+
+          # For PHP/Yii repo
+          if [ -f "composer.json" ]; then
+            sed -i "s/${{ github.event.inputs.old_version }}/${{ github.event.inputs.new_version }}/g" composer.json
+          fi
+
+      - name: Commit changes
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+
+          git add .
+          git commit -m "Bump version: ${{ github.event.inputs.old_version }} → ${{ github.event.inputs.new_version }}" || echo "No changes to commit"
+
+      - name: Push changes
+        run: |
+          git push
+
+      - name: Create Tag
+        run: |
+          git tag v${{ github.event.inputs.new_version }}
+          git push origin v${{ github.event.inputs.new_version }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ github.event.inputs.new_version }}
+          name: Release v${{ github.event.inputs.new_version }}
+          body: |
+            Automated release.
+            Version updated from **${{ github.event.inputs.old_version }}** → **${{ github.event.inputs.new_version }}**
