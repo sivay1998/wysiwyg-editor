@@ -48,7 +48,7 @@ jobs:
       - name: Trigger Child Repos
         run: |
           CHILD_REPOS=(
-            "froala/yii2-froala-editor"
+            "sivay1998/yii2-froala-editor"
             # Add future repos here
             # "froala/another-repo"
           )
